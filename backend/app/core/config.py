@@ -22,9 +22,11 @@ class Settings(BaseSettings):
     @classmethod
     def sanitize_database_url(cls, v: str) -> str:
         # Render.com provides connection strings starting with 'postgres://'
-        # SQLAlchemy 2.0 requires dialect 'postgresql://'
+        # Explicitly specify 'postgresql+psycopg2://' so SQLAlchemy always uses psycopg2-binary
         if v.startswith("postgres://"):
-            return v.replace("postgres://", "postgresql://", 1)
+            return v.replace("postgres://", "postgresql+psycopg2://", 1)
+        elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
+            return v.replace("postgresql://", "postgresql+psycopg2://", 1)
         return v
 
     model_config = SettingsConfigDict(
