@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +17,15 @@ def find_env_file() -> str:
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+
+    @field_validator("DATABASE_URL", mode="after")
+    @classmethod
+    def sanitize_database_url(cls, v: str) -> str:
+        # Render.com provides connection strings starting with 'postgres://'
+        # SQLAlchemy 2.0 requires dialect 'postgresql://'
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
+        return v
 
     model_config = SettingsConfigDict(
         env_file=find_env_file(),

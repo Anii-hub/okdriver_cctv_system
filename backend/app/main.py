@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import asyncio
+import os
 import random
 import httpx
 from contextlib import asynccontextmanager
@@ -131,9 +132,10 @@ async def ai_simulator():
 
                 # Internal API call karo detection create karne ke liye
                 # (isse detection saving + watchlist check + WebSocket broadcast sab ho jaata hai)
+                port = os.getenv("PORT", "8000")
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        "http://127.0.0.1:8000/api/v1/detections/",
+                        f"http://127.0.0.1:{port}/api/v1/detections/",
                         json={
                             "camera_id": chosen_camera.id,
                             "event_type": "ANPR",
@@ -212,9 +214,18 @@ app = FastAPI(
 # CORS
 # ==========================================
 
+cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    cors_origins.append(frontend_url.rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins,
+    allow_origin_regex=r"https?://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
